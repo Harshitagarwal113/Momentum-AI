@@ -244,7 +244,7 @@ async function startServer() {
   validateAndReportEnv();
 
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
   // Read injected variables
   const apiKey = process.env.GEMINI_API_KEY;
