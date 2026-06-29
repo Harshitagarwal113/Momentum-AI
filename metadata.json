@@ -1,0 +1,10 @@
+{
+  "name": "Momentum AI",
+  "description": "Momentum AI - Your Autonomous Chief of Staff. An agentic platform built with FastAPI and Next.js 15 for proactive task execution.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
