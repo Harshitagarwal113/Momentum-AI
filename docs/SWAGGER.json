@@ -1,0 +1,289 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Momentum AI - Autonomous Chief of Staff API",
+    "description": "Comprehensive REST and Agentic API documentation for the Momentum AI application. This API powers autonomous scheduling, deadline drift predictions, daily executive briefs, cognitive fatigue monitoring, and Google Workspace integrations.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Momentum Engineering Team",
+      "email": "harshitagarwal11345@gmail.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local Development Server"
+    },
+    {
+      "url": "https://ais-dev-u4yzi47wj7qvkh73shrk4t-938078445189.asia-southeast1.run.app",
+      "description": "Staging Cloud Run Environment"
+    }
+  ],
+  "paths": {
+    "/api/auth/session": {
+      "post": {
+        "summary": "Retrieve current authenticated user session",
+        "description": "Validates the active HttpOnly cookie session and returns user profile details if active.",
+        "responses": {
+          "200": {
+            "description": "Session checked successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "session": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login-email": {
+      "post": {
+        "summary": "Authenticate using Email/Password credentials",
+        "description": "Logs in an existing user or bootstraps a new user record. Sets an HttpOnly security cookie `session_user_id`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": { "type": "string", "format": "email", "example": "harshitagarwal11345@gmail.com" },
+                  "password": { "type": "string", "example": "securePassword123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful.",
+            "headers": {
+              "Set-Cookie": {
+                "schema": { "type": "string", "example": "session_user_id=usr_01h8a9; Path=/; HttpOnly; SameSite=Lax" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "user": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login-google": {
+      "post": {
+        "summary": "Authenticate using Google Single Sign-On (OAuth2)",
+        "description": "Authenticates the user using Firebase Google Auth tokens. Automatically maps secure email, display profile name, and system timezone values.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "name": { "type": "string" },
+                  "avatar": { "type": "string", "format": "uri" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Google authentication validated and cookie session established."
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "summary": "Invalidate and clear user session",
+        "description": "Clears the active session cookie and appends an audit log entry representing signs out.",
+        "responses": {
+          "200": {
+            "description": "Logout successful."
+          }
+        }
+      }
+    },
+    "/api/goals": {
+      "get": {
+        "summary": "Retrieve user's strategic milestones and goals",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Goal" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new high-level strategic goal",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "string", "example": "Series A Presentation Preparation" },
+                  "description": { "type": "string" },
+                  "target_date": { "type": "string", "format": "date-time" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Goal created successfully."
+          }
+        }
+      }
+    },
+    "/api/tasks/natural": {
+      "post": {
+        "summary": "Parse and structure natural language input into active tasks",
+        "description": "Applies a specialized cognitive agent pattern leveraging Google Gemini models. Parses voice dictations or text drafts to extract due dates, priorities, task hierarchies, subtask checklists, and predicted delivery delays.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["prompt"],
+                "properties": {
+                  "prompt": { "type": "string", "example": "Review pitch deck templates tomorrow by 4pm, prioritize high, it requires market research" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Structured task generated and saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": { "$ref": "#/components/schemas/Task" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/schedules/optimize": {
+      "post": {
+        "summary": "Optimize calendar schedule automatically using Agentic logic",
+        "description": "Triggers the Autonomous Scheduler Agent to read all pending tasks, sort them based on dependency trees and delivery priority, and allocate focus reservation blocks. Inserts 15m decompression buffers.",
+        "responses": {
+          "200": {
+            "description": "Calendar optimized successfully."
+          }
+        }
+      }
+    },
+    "/api/agent/daily-brief": {
+      "get": {
+        "summary": "Synthesize a proactive daily briefing",
+        "description": "Retrieves active user contexts, habits streaks, goal timelines, and recent journal inputs to prepare a morning strategic alignment brief using the Gemini engine.",
+        "responses": {
+          "200": {
+            "description": "Brief compiled successfully."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "usr_01h8a9" },
+          "email": { "type": "string" },
+          "full_name": { "type": "string" },
+          "avatar_url": { "type": "string" },
+          "timezone": { "type": "string", "example": "America/Los_Angeles" },
+          "is_premium": { "type": "boolean" },
+          "dark_mode": { "type": "boolean" }
+        }
+      },
+      "Goal": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "user_id": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "target_date": { "type": "string", "format": "date-time" },
+          "status": { "type": "string", "enum": ["in_progress", "completed", "suspended"] }
+        }
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "user_id": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "deadline": { "type": "string", "format": "date-time" },
+          "priority": { "type": "string", "enum": ["high", "medium", "low"] },
+          "status": { "type": "string", "enum": ["pending", "in_progress", "completed"] },
+          "subtasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "title": { "type": "string" },
+                "completed": { "type": "boolean" }
+              }
+            }
+          },
+          "dependencies": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "risk_score": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "risk_reason": { "type": "string" },
+          "predicted_deadline": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
+}
